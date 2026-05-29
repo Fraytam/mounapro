@@ -110,7 +110,7 @@ export default function ROICalculatorPage() {
         </motion.div>
 
         <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} className="space-y-6">
-          {roiOutputs && (
+          {roiOutputs && roiInputs.contractValue > 0 && roiInputs.estimatedHours > 0 && (
             <>
               <Card>
                 <CardHeader>

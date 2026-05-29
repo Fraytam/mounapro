@@ -118,7 +118,7 @@ export default function FeeCalculatorPage() {
         </motion.div>
 
         <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }}>
-          {feeOutputs && (
+          {feeOutputs && feeInputs.amount > 0 && (
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2 text-lg">

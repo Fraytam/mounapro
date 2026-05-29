@@ -37,17 +37,17 @@ interface CalculatorState {
 }
 
 const defaultRateInputs: RateCalculatorInputs = {
-  yearlyIncomeGoal: 100000,
-  monthlyExpenses: 2000,
-  taxRate: 30,
-  billableHoursPerWeek: 25,
-  vacationWeeks: 4,
-  softwareCosts: 200,
-  emergencyBuffer: 10,
+  yearlyIncomeGoal: 0,
+  monthlyExpenses: 0,
+  taxRate: 0,
+  billableHoursPerWeek: 0,
+  vacationWeeks: 0,
+  softwareCosts: 0,
+  emergencyBuffer: 0,
 }
 
 const defaultFeeInputs: FeeCalculatorInputs = {
-  amount: 1000,
+  amount: 0,
   platform: "upwork",
   region: "usa",
   transactionType: "domestic",
@@ -57,21 +57,21 @@ const defaultFeeInputs: FeeCalculatorInputs = {
 }
 
 const defaultRoiInputs: ROICalculatorInputs = {
-  contractValue: 5000,
-  estimatedHours: 40,
-  meetingHours: 5,
-  revisionHours: 8,
-  overheadPercent: 15,
-  toolCosts: 100,
-  delayRisk: 10,
+  contractValue: 0,
+  estimatedHours: 0,
+  meetingHours: 0,
+  revisionHours: 0,
+  overheadPercent: 0,
+  toolCosts: 0,
+  delayRisk: 0,
 }
 
 const defaultTaxInputs: TaxEstimatorInputs = {
   filingStatus: "single",
-  annualIncome: 80000,
-  businessExpenses: 5000,
-  retirementContributions: 6000,
-  healthInsurance: 4800,
+  annualIncome: 0,
+  businessExpenses: 0,
+  retirementContributions: 0,
+  healthInsurance: 0,
   state: "California",
 }
 

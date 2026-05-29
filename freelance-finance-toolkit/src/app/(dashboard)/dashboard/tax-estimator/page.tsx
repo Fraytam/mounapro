@@ -12,7 +12,7 @@ import { Separator } from "@/components/ui/separator"
 import { Progress } from "@/components/ui/progress"
 import { Badge } from "@/components/ui/badge"
 import { useCalculatorStore } from "@/store/calculator-store"
-import { formatCurrency, formatPercent } from "@/lib/utils"
+import { formatCurrency } from "@/lib/utils"
 import { saveCalculation } from "@/lib/actions/reports"
 
 export default function TaxEstimatorPage() {
@@ -98,7 +98,7 @@ export default function TaxEstimatorPage() {
         </motion.div>
 
         <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} className="space-y-6">
-          {taxOutputs && (
+          {taxOutputs && taxInputs.annualIncome > 0 && (
             <>
               <Card>
                 <CardHeader>

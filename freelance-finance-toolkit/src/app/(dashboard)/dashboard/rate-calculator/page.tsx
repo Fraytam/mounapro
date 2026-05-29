@@ -112,7 +112,7 @@ export default function RateCalculatorPage() {
 
         {/* Outputs */}
         <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} className="space-y-6">
-          {rateOutputs && (
+          {rateOutputs && rateInputs.yearlyIncomeGoal > 0 && (
             <>
               <Card>
                 <CardHeader>
