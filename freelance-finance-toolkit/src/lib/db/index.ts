@@ -3,7 +3,16 @@ import crypto from "crypto"
 import path from "path"
 import fs from "fs"
 
-const isVercel = !!process.env.KV_URL || !!process.env.UPSTASH_REDIS_REST_URL
+const isVercel = !!process.env.VERCEL
+const hasRedis = !!process.env.KV_URL || !!process.env.UPSTASH_REDIS_REST_URL
+
+if (isVercel && !hasRedis) {
+  throw new Error(
+    "MounaPro needs a Redis database on Vercel. " +
+    "Go to https://vercel.com/fraytam/freelance-finance-toolkit/stores, " +
+    "click 'Create Database', and add Upstash for Redis."
+  )
+}
 
 function getRedis(): Redis {
   return new Redis({
@@ -273,7 +282,7 @@ const sql = {
   deleteReport(id: string) { getSqlite().prepare("DELETE FROM reports WHERE id = ?").run(id) },
 }
 
-const db = isVercel
+const db = hasRedis
   ? {
       createUser: redisCreateUser,
       findUserByEmail: redisFindUserByEmail,
