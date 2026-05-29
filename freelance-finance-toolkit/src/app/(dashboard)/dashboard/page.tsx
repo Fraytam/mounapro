@@ -2,36 +2,29 @@
 
 import { useState, useEffect } from "react"
 import { motion } from "framer-motion"
-import { ArrowUp, ArrowDown, DollarSign, Clock, Target, TrendingUp, Briefcase } from "lucide-react"
+import { ArrowUp, ArrowDown, FileText, Calculator, Target, Calendar, TrendingUp, Clock } from "lucide-react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import Link from "next/link"
+import { getMyReports } from "@/lib/actions/reports"
+import { getSessionUser } from "@/lib/actions/auth"
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, AreaChart, Area,
 } from "recharts"
 
-const weeklyData = [
-  { name: "Mon", earned: 1200, hours: 8 },
-  { name: "Tue", earned: 1800, hours: 10 },
-  { name: "Wed", earned: 900, hours: 6 },
-  { name: "Thu", earned: 2100, hours: 11 },
-  { name: "Fri", earned: 1500, hours: 7 },
-  { name: "Sat", earned: 600, hours: 3 },
-  { name: "Sun", earned: 0, hours: 0 },
-]
-
-const monthlyData = [
-  { name: "Jan", income: 18000, expenses: 4000 },
-  { name: "Feb", income: 22000, expenses: 4200 },
-  { name: "Mar", income: 19000, expenses: 3800 },
-  { name: "Apr", income: 25000, expenses: 4500 },
-  { name: "May", income: 21000, expenses: 4100 },
-  { name: "Jun", income: 28000, expenses: 4800 },
-]
+interface Report {
+  id: string
+  name: string
+  type: string
+  createdAt: string
+}
 
 export default function DashboardOverview() {
   const [dark, setDark] = useState(false)
+  const [reports, setReports] = useState<Report[]>([])
+  const [userName, setUserName] = useState("")
+  const [loading, setLoading] = useState(true)
 
   useEffect(() => {
     setDark(document.documentElement.classList.contains("dark"))
@@ -39,6 +32,11 @@ export default function DashboardOverview() {
       setDark(document.documentElement.classList.contains("dark"))
     })
     observer.observe(document.documentElement, { attributes: true, attributeFilter: ["class"] })
+    Promise.all([getMyReports(), getSessionUser()]).then(([r, u]) => {
+      setReports(r as Report[])
+      if (u) setUserName(u.name)
+      setLoading(false)
+    })
     return () => observer.disconnect()
   }, [])
 
@@ -50,16 +48,31 @@ export default function DashboardOverview() {
   const tooltipBorder = dark ? "#3f3f46" : "#e4e4e7"
   const tooltipTextColor = dark ? "#f4f4f5" : "#18181b"
 
+  const typeCounts = reports.reduce<Record<string, number>>((acc, r) => {
+    acc[r.type] = (acc[r.type] || 0) + 1
+    return acc
+  }, {})
+
+  const chartData = Object.entries(typeCounts).map(([type, count]) => ({ name: type.split(" ")[0], count }))
+
+  const timelineData = reports.length > 0
+    ? [...new Set(reports.map((r) => new Date(r.createdAt).toLocaleDateString("en-US", { month: "short" })))].map((m) => ({
+        name: m,
+        reports: reports.filter((r) => new Date(r.createdAt).toLocaleDateString("en-US", { month: "short" }) === m).length,
+      }))
+    : []
+
+  const latestReport = reports[0]
+  const typesUsed = Object.keys(typeCounts).length
+
   return (
     <div className="space-y-8">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h1 className="text-3xl font-bold tracking-tight">Dashboard Overview</h1>
-          <p className="text-zinc-500 dark:text-zinc-400">Your freelance financial snapshot</p>
-        </div>
-        <div className="flex gap-3">
-          <Button variant="outline" size="sm">Export Report</Button>
-          <Button size="sm">New Calculation</Button>
+          <p className="text-zinc-500 dark:text-zinc-400">
+            {loading ? "Loading..." : `Welcome back, ${userName}`}
+          </p>
         </div>
       </div>
 
@@ -69,10 +82,10 @@ export default function DashboardOverview() {
         className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4"
       >
         {[
-          { label: "Projected Annual Income", value: "$147,500", change: "+12.3%", icon: DollarSign, up: true },
-          { label: "Avg. Hourly Rate", value: "$97/hr", change: "+8.1%", icon: Clock, up: true },
-          { label: "Tax Estimate", value: "$38,742", change: "+3.2%", icon: Target, up: false },
-          { label: "Monthly Goal Progress", value: "72%", change: "of $12,500", icon: TrendingUp, up: true },
+          { label: "Saved Reports", value: String(reports.length), change: "total calculations", icon: FileText, up: true },
+          { label: "Calculator Types", value: String(typesUsed), change: "tools used", icon: Calculator, up: true },
+          { label: "Latest Report", value: latestReport ? new Date(latestReport.createdAt).toLocaleDateString() : "N/A", change: latestReport?.type || "", icon: Calendar, up: true },
+          { label: "Account Plan", value: "Free", change: "upgrade for more", icon: TrendingUp, up: false },
         ].map((stat, i) => (
           <motion.div
             key={stat.label}
@@ -90,15 +103,7 @@ export default function DashboardOverview() {
                 </div>
                 <p className="mt-2 text-2xl font-bold">{stat.value}</p>
                 <div className="mt-1 flex items-center gap-1 text-xs">
-                  {stat.up ? (
-                    <ArrowUp className="h-3 w-3 text-emerald-500" />
-                  ) : (
-                    <ArrowDown className="h-3 w-3 text-red-500" />
-                  )}
-                  <span className={stat.up ? "text-emerald-600 dark:text-emerald-400" : "text-red-600 dark:text-red-400"}>
-                    {stat.change}
-                  </span>
-                  <span className="text-zinc-400">vs last month</span>
+                  <span className="text-zinc-400">{stat.change}</span>
                 </div>
               </CardContent>
             </Card>
@@ -109,59 +114,71 @@ export default function DashboardOverview() {
       <div className="grid gap-6 lg:grid-cols-2">
         <Card>
           <CardHeader>
-            <CardTitle className="text-lg">Income Overview</CardTitle>
+            <CardTitle className="text-lg">Reports by Type</CardTitle>
           </CardHeader>
           <CardContent>
-            <ResponsiveContainer width="100%" height={280}>
-              <AreaChart data={monthlyData}>
-                <defs>
-                  <linearGradient id="incomeGrad" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor={lineColor} stopOpacity={0.3} />
-                    <stop offset="95%" stopColor={lineColor} stopOpacity={0} />
-                  </linearGradient>
-                </defs>
-                <CartesianGrid strokeDasharray="3 3" stroke={gridColor} />
-                <XAxis dataKey="name" stroke={axisColor} fontSize={12} tickLine={false} />
-                <YAxis stroke={axisColor} fontSize={12} tickLine={false} />
-                <Tooltip
-                  contentStyle={{
-                    borderRadius: "12px",
-                    border: `1px solid ${tooltipBorder}`,
-                    background: tooltipBg,
-                    color: tooltipTextColor,
-                    fontSize: "13px",
-                  }}
-                  labelStyle={{ color: dark ? "#a1a1aa" : "#71717a", fontWeight: 500 }}
-                />
-                <Area type="monotone" dataKey="income" stroke={lineColor} fill="url(#incomeGrad)" strokeWidth={2.5} />
-              </AreaChart>
-            </ResponsiveContainer>
+            {chartData.length === 0 ? (
+              <div className="flex items-center justify-center h-[280px] text-zinc-400 text-sm">
+                Save a report to see your breakdown
+              </div>
+            ) : (
+              <ResponsiveContainer width="100%" height={280}>
+                <BarChart data={chartData}>
+                  <CartesianGrid strokeDasharray="3 3" stroke={gridColor} />
+                  <XAxis dataKey="name" stroke={axisColor} fontSize={12} tickLine={false} />
+                  <YAxis stroke={axisColor} fontSize={12} tickLine={false} allowDecimals={false} />
+                  <Tooltip
+                    contentStyle={{
+                      borderRadius: "12px",
+                      border: `1px solid ${tooltipBorder}`,
+                      background: tooltipBg,
+                      color: tooltipTextColor,
+                      fontSize: "13px",
+                    }}
+                    labelStyle={{ color: dark ? "#a1a1aa" : "#71717a", fontWeight: 500 }}
+                  />
+                  <Bar dataKey="count" fill={barColor} radius={[6, 6, 0, 0]} name="Reports" />
+                </BarChart>
+              </ResponsiveContainer>
+            )}
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader>
-            <CardTitle className="text-lg">Weekly Billable Hours</CardTitle>
+            <CardTitle className="text-lg">Reports Timeline</CardTitle>
           </CardHeader>
           <CardContent>
-            <ResponsiveContainer width="100%" height={280}>
-              <BarChart data={weeklyData}>
-                <CartesianGrid strokeDasharray="3 3" stroke={gridColor} />
-                <XAxis dataKey="name" stroke={axisColor} fontSize={12} tickLine={false} />
-                <YAxis stroke={axisColor} fontSize={12} tickLine={false} />
-                <Tooltip
-                  contentStyle={{
-                    borderRadius: "12px",
-                    border: `1px solid ${tooltipBorder}`,
-                    background: tooltipBg,
-                    color: tooltipTextColor,
-                    fontSize: "13px",
-                  }}
-                  labelStyle={{ color: dark ? "#a1a1aa" : "#71717a", fontWeight: 500 }}
-                />
-                <Bar dataKey="earned" fill={barColor} radius={[6, 6, 0, 0]} />
-              </BarChart>
-            </ResponsiveContainer>
+            {timelineData.length === 0 ? (
+              <div className="flex items-center justify-center h-[280px] text-zinc-400 text-sm">
+                Save a report to see your timeline
+              </div>
+            ) : (
+              <ResponsiveContainer width="100%" height={280}>
+                <AreaChart data={timelineData}>
+                  <defs>
+                    <linearGradient id="timelineGrad" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%" stopColor={lineColor} stopOpacity={0.3} />
+                      <stop offset="95%" stopColor={lineColor} stopOpacity={0} />
+                    </linearGradient>
+                  </defs>
+                  <CartesianGrid strokeDasharray="3 3" stroke={gridColor} />
+                  <XAxis dataKey="name" stroke={axisColor} fontSize={12} tickLine={false} />
+                  <YAxis stroke={axisColor} fontSize={12} tickLine={false} allowDecimals={false} />
+                  <Tooltip
+                    contentStyle={{
+                      borderRadius: "12px",
+                      border: `1px solid ${tooltipBorder}`,
+                      background: tooltipBg,
+                      color: tooltipTextColor,
+                      fontSize: "13px",
+                    }}
+                    labelStyle={{ color: dark ? "#a1a1aa" : "#71717a", fontWeight: 500 }}
+                  />
+                  <Area type="monotone" dataKey="reports" stroke={lineColor} fill="url(#timelineGrad)" strokeWidth={2.5} name="Reports" />
+                </AreaChart>
+              </ResponsiveContainer>
+            )}
           </CardContent>
         </Card>
       </div>
@@ -170,15 +187,15 @@ export default function DashboardOverview() {
         <Card className="bg-zinc-900 text-white dark:bg-zinc-50 dark:text-zinc-900 border-0">
           <CardContent className="p-6">
             <div className="flex items-center gap-2 mb-2">
-              <Briefcase className="h-4 w-4" />
-              <span className="text-xs font-medium uppercase tracking-wider">Rate Alert</span>
+              <Calculator className="h-4 w-4" />
+              <span className="text-xs font-medium uppercase tracking-wider">Rate Calculator</span>
             </div>
             <p className="text-sm leading-relaxed opacity-90">
-              Your effective hourly rate ($72/hr) is below your target ($97/hr). Consider increasing your project pricing.
+              Find your ideal hourly rate based on income goals, expenses, and market rates.
             </p>
             <Link href="/dashboard/rate-calculator">
               <Button variant="secondary" size="sm" className="mt-3 bg-white/20 text-white hover:bg-white/30 dark:bg-zinc-900/20 dark:text-zinc-900">
-                Optimize Now
+                Calculate Now
               </Button>
             </Link>
           </CardContent>
@@ -186,28 +203,28 @@ export default function DashboardOverview() {
         <Card>
           <CardContent className="p-6">
             <div className="flex items-center gap-2 mb-2">
-              <DollarSign className="h-4 w-4 text-emerald-500" />
-              <span className="text-xs font-medium uppercase tracking-wider text-emerald-600 dark:text-emerald-400">Fee Saving</span>
+              <Target className="h-4 w-4 text-emerald-500" />
+              <span className="text-xs font-medium uppercase tracking-wider text-emerald-600 dark:text-emerald-400">ROI Analyzer</span>
             </div>
             <p className="text-sm leading-relaxed text-zinc-600 dark:text-zinc-400">
-              You paid $847 in platform fees this month. Switching to direct payments could save you $320.
+              Evaluate contracts before you accept. Know your effective hourly rate and risk score.
             </p>
-            <Link href="/dashboard/fee-calculator">
-              <Button variant="outline" size="sm" className="mt-3">Compare Platforms</Button>
+            <Link href="/dashboard/roi-calculator">
+              <Button variant="outline" size="sm" className="mt-3">Analyze Contract</Button>
             </Link>
           </CardContent>
         </Card>
         <Card>
           <CardContent className="p-6">
             <div className="flex items-center gap-2 mb-2">
-              <Target className="h-4 w-4 text-amber-500" />
-              <span className="text-xs font-medium uppercase tracking-wider text-amber-600 dark:text-amber-400">Tax Tip</span>
+              <Clock className="h-4 w-4 text-amber-500" />
+              <span className="text-xs font-medium uppercase tracking-wider text-amber-600 dark:text-amber-400">Tax Estimator</span>
             </div>
             <p className="text-sm leading-relaxed text-zinc-600 dark:text-zinc-400">
-              Set aside $3,228/month for taxes. You&apos;re on track to owe ~$38.7K this year.
+              Estimate your taxes and know exactly how much to set aside each month.
             </p>
             <Link href="/dashboard/tax-estimator">
-              <Button variant="outline" size="sm" className="mt-3">View Details</Button>
+              <Button variant="outline" size="sm" className="mt-3">Estimate Taxes</Button>
             </Link>
           </CardContent>
         </Card>
