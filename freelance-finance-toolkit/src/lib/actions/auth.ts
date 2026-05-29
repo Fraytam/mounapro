@@ -13,6 +13,11 @@ import {
   deleteUserSessions,
   deleteSession,
   findUserById,
+  updateUserProfile,
+  saveUserSettings,
+  findUserSettings,
+  hashPw,
+  verifyPw,
 } from "@/lib/db"
 
 export async function signUp(formData: FormData) {
@@ -26,7 +31,7 @@ export async function signUp(formData: FormData) {
   const existing = await findUserByEmail(email)
   if (existing) return { error: "An account with this email already exists" }
 
-  const passwordHash = crypto.createHash("sha256").update(password).digest("hex")
+  const passwordHash = hashPw(password)
   const user = await createUser(email, name, passwordHash)
   const session = await createSession(user.id)
 
@@ -49,10 +54,8 @@ export async function signIn(formData: FormData) {
 
   if (!email || !password) return { error: "Email and password are required" }
 
-  const passwordHash = crypto.createHash("sha256").update(password).digest("hex")
   const storedHash = await getUserPasswordHash(email)
-
-  if (!storedHash || storedHash !== passwordHash) {
+  if (!storedHash || !verifyPw(password, storedHash)) {
     return { error: "Invalid email or password" }
   }
 
@@ -94,7 +97,6 @@ export async function sendResetLink(formData: FormData) {
   const email = formData.get("email") as string
   const user = await findUserByEmail(email)
   if (!user) return { error: "No account found with this email" }
-
   return { success: true, message: "Password reset is not available in local mode. Contact support." }
 }
 
@@ -102,9 +104,30 @@ export async function getSessionUser() {
   const cookieStore = await cookies()
   const sessionId = cookieStore.get("session_id")?.value
   if (!sessionId) return null
-
   const session = await findSession(sessionId)
   if (!session) return null
-
   return findUserById(session.userId)
+}
+
+export async function updateProfile(name: string) {
+  const user = await getSessionUser()
+  if (!user) return { error: "Not authenticated" }
+  await updateUserProfile(user.id, name)
+  revalidatePath("/dashboard/settings")
+  return { success: true }
+}
+
+export async function saveSettings(settings: string) {
+  const user = await getSessionUser()
+  if (!user) return { error: "Not authenticated" }
+  await saveUserSettings(user.id, settings)
+  revalidatePath("/dashboard/settings")
+  return { success: true }
+}
+
+export async function loadSettings() {
+  const user = await getSessionUser()
+  if (!user) return null
+  const s = await findUserSettings(user.id)
+  return s ? JSON.parse(s) : null
 }

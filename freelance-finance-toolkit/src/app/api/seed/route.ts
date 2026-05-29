@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server"
 import crypto from "crypto"
-import { createUser, findUserByEmail } from "@/lib/db"
+import { createUser, findUserByEmail, findUserById, hashPw } from "@/lib/db"
 
 export async function GET() {
   const admin = await findUserByEmail("admin@freelanceflow.local")
@@ -8,7 +8,7 @@ export async function GET() {
     return NextResponse.json({ message: "Admin user already exists." })
   }
 
-  const hash = crypto.createHash("sha256").update("admin123").digest("hex")
+  const hash = hashPw("admin123")
   const user = await createUser("admin@freelanceflow.local", "Admin", hash)
 
   return NextResponse.json({

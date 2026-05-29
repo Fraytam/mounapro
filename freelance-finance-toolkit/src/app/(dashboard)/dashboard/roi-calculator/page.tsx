@@ -1,8 +1,8 @@
 "use client"
 
-import { useEffect } from "react"
+import { useEffect, useState } from "react"
 import { motion } from "framer-motion"
-import { Target, TrendingUp, AlertTriangle, CheckCircle, Info } from "lucide-react"
+import { Target, TrendingUp, AlertTriangle, CheckCircle, Info, Save, Check } from "lucide-react"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -12,9 +12,20 @@ import { Separator } from "@/components/ui/separator"
 import { Progress } from "@/components/ui/progress"
 import { useCalculatorStore } from "@/store/calculator-store"
 import { formatCurrency } from "@/lib/utils"
+import { saveCalculation } from "@/lib/actions/reports"
 
 export default function ROICalculatorPage() {
   const { roiInputs, roiOutputs, setRoiInputs, calculateROI } = useCalculatorStore()
+  const [saving, setSaving] = useState(false)
+  const [saved, setSaved] = useState(false)
+
+  async function handleSave() {
+    setSaving(true)
+    await saveCalculation("ROI Calculator", `ROI Analysis - ${new Date().toLocaleDateString()}`, JSON.stringify({ inputs: roiInputs, outputs: roiOutputs }))
+    setSaving(false)
+    setSaved(true)
+    setTimeout(() => setSaved(false), 2000)
+  }
 
   useEffect(() => {
     calculateROI()
@@ -170,6 +181,9 @@ export default function ROICalculatorPage() {
               </Card>
             </>
           )}
+          <Button onClick={handleSave} disabled={saving} className="w-full">
+            {saving ? "Saving..." : saved ? <><Check className="h-4 w-4" /> Saved</> : <><Save className="h-4 w-4" /> Save Report</>}
+          </Button>
         </motion.div>
       </div>
     </div>

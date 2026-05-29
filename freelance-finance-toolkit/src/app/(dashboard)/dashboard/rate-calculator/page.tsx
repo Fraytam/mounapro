@@ -1,8 +1,8 @@
 "use client"
 
-import { useEffect } from "react"
+import { useEffect, useState } from "react"
 import { motion } from "framer-motion"
-import { Calculator, TrendingUp, AlertTriangle, DollarSign } from "lucide-react"
+import { Calculator, TrendingUp, AlertTriangle, DollarSign, Save, Check } from "lucide-react"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -12,9 +12,20 @@ import { Separator } from "@/components/ui/separator"
 import { Progress } from "@/components/ui/progress"
 import { useCalculatorStore } from "@/store/calculator-store"
 import { formatCurrency } from "@/lib/utils"
+import { saveCalculation } from "@/lib/actions/reports"
 
 export default function RateCalculatorPage() {
   const { rateInputs, rateOutputs, setRateInputs, calculateRate } = useCalculatorStore()
+  const [saving, setSaving] = useState(false)
+  const [saved, setSaved] = useState(false)
+
+  async function handleSave() {
+    setSaving(true)
+    await saveCalculation("Rate Calculator", `Rate Analysis - ${new Date().toLocaleDateString()}`, JSON.stringify({ inputs: rateInputs, outputs: rateOutputs }))
+    setSaving(false)
+    setSaved(true)
+    setTimeout(() => setSaved(false), 2000)
+  }
 
   useEffect(() => {
     calculateRate()
@@ -169,6 +180,10 @@ export default function RateCalculatorPage() {
                   )}
                 </CardContent>
               </Card>
+
+              <Button onClick={handleSave} disabled={saving} className="w-full">
+                {saving ? "Saving..." : saved ? <><Check className="h-4 w-4" /> Saved</> : <><Save className="h-4 w-4" /> Save Report</>}
+              </Button>
 
               {/* Progress toward goal */}
               <Card>

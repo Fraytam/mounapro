@@ -1,5 +1,6 @@
 "use client"
 
+import { useState, useEffect } from "react"
 import { motion } from "framer-motion"
 import { Settings, User, Bell, CreditCard, Palette, Shield } from "lucide-react"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
@@ -9,8 +10,48 @@ import { Label } from "@/components/ui/label"
 import { Separator } from "@/components/ui/separator"
 import { Switch } from "@/components/ui/switch"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { useTheme } from "next-themes"
+import { getSessionUser, updateProfile, saveSettings, loadSettings } from "@/lib/actions/auth"
 
 export default function SettingsPage() {
+  const { theme, setTheme } = useTheme()
+  const [name, setName] = useState("")
+  const [email, setEmail] = useState("")
+  const [timezone, setTimezone] = useState("America/New_York")
+  const [notifications, setNotifications] = useState({
+    weeklySummary: true,
+    taxReminders: true,
+    newFeatures: false,
+    feeAlerts: true,
+  })
+  const [compactSidebar, setCompactSidebar] = useState(false)
+  const [saving, setSaving] = useState(false)
+  const [saved, setSaved] = useState(false)
+
+  useEffect(() => {
+    getSessionUser().then((u) => {
+      if (u) { setName(u.name); setEmail(u.email) }
+    })
+    loadSettings().then((s) => {
+      if (s) {
+        if (s.timezone) setTimezone(s.timezone)
+        if (s.notifications) setNotifications({ ...notifications, ...s.notifications })
+        if (s.compactSidebar !== undefined) setCompactSidebar(s.compactSidebar)
+        if (s.theme && setTheme) setTheme(s.theme)
+      }
+    })
+  }, [])
+
+  async function handleSaveProfile() {
+    setSaving(true)
+    await updateProfile(name)
+    const settings = JSON.stringify({ timezone, notifications, compactSidebar, theme })
+    await saveSettings(settings)
+    setSaving(false)
+    setSaved(true)
+    setTimeout(() => setSaved(false), 2000)
+  }
+
   return (
     <div className="space-y-8">
       <div>
@@ -35,17 +76,19 @@ export default function SettingsPage() {
             <CardContent className="space-y-4 max-w-md">
               <div className="grid gap-2">
                 <Label>Full Name</Label>
-                <Input defaultValue="Jane Doe" />
+                <Input value={name} onChange={(e) => setName(e.target.value)} />
               </div>
               <div className="grid gap-2">
                 <Label>Email</Label>
-                <Input type="email" defaultValue="jane@example.com" />
+                <Input type="email" value={email} disabled className="opacity-60" />
               </div>
               <div className="grid gap-2">
                 <Label>Timezone</Label>
-                <Input defaultValue="America/New_York" />
+                <Input value={timezone} onChange={(e) => setTimezone(e.target.value)} />
               </div>
-              <Button>Save Changes</Button>
+              <Button onClick={handleSaveProfile} disabled={saving}>
+                {saving ? "Saving..." : saved ? "Saved!" : "Save Changes"}
+              </Button>
             </CardContent>
           </Card>
         </TabsContent>
@@ -58,19 +101,23 @@ export default function SettingsPage() {
             </CardHeader>
             <CardContent className="space-y-6 max-w-md">
               {[
-                { label: "Weekly income summary", desc: "Get a weekly email with your earnings overview" },
-                { label: "Tax reminders", desc: "Reminders for quarterly estimated tax payments" },
-                { label: "New features", desc: "Be the first to know about new calculators and tools" },
-                { label: "Fee alerts", desc: "Get notified when platform fees change" },
+                { key: "weeklySummary", label: "Weekly income summary", desc: "Get a weekly email with your earnings overview" },
+                { key: "taxReminders", label: "Tax reminders", desc: "Reminders for quarterly estimated tax payments" },
+                { key: "newFeatures", label: "New features", desc: "Be the first to know about new calculators and tools" },
+                { key: "feeAlerts", label: "Fee alerts", desc: "Get notified when platform fees change" },
               ].map((item) => (
-                <div key={item.label} className="flex items-center justify-between">
+                <div key={item.key} className="flex items-center justify-between">
                   <div>
                     <p className="text-sm font-medium">{item.label}</p>
                     <p className="text-xs text-zinc-500">{item.desc}</p>
                   </div>
-                  <Switch />
+                  <Switch
+                    checked={(notifications as any)[item.key]}
+                    onCheckedChange={(v) => setNotifications({ ...notifications, [item.key]: v })}
+                  />
                 </div>
               ))}
+              <Button onClick={handleSaveProfile} disabled={saving}>{saving ? "Saving..." : "Save Changes"}</Button>
             </CardContent>
           </Card>
         </TabsContent>
@@ -87,12 +134,12 @@ export default function SettingsPage() {
                 <p className="text-lg font-bold">Free Plan</p>
                 <p className="text-xs text-zinc-500 mt-1">Basic calculators and up to 3 saved reports</p>
               </div>
-              <Button>Upgrade to Pro — $19/mo</Button>
+              <Button disabled>Upgrade to Pro — $19/mo (Coming Soon)</Button>
               <Separator />
               <div className="space-y-3">
                 <Label>Payment Method</Label>
                 <p className="text-sm text-zinc-500">No payment method on file</p>
-                <Button variant="outline" size="sm">Add Payment Method</Button>
+                <Button variant="outline" size="sm" disabled>Add Payment Method (Coming Soon)</Button>
               </div>
             </CardContent>
           </Card>
@@ -110,15 +157,22 @@ export default function SettingsPage() {
                   <p className="text-sm font-medium">Dark Mode</p>
                   <p className="text-xs text-zinc-500">Toggle dark mode on/off</p>
                 </div>
-                <Switch defaultChecked />
+                <Switch
+                  checked={theme === "dark"}
+                  onCheckedChange={(v) => setTheme(v ? "dark" : "light")}
+                />
               </div>
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm font-medium">Compact Sidebar</p>
                   <p className="text-xs text-zinc-500">Use a narrower sidebar layout</p>
                 </div>
-                <Switch />
+                <Switch
+                  checked={compactSidebar}
+                  onCheckedChange={(v) => setCompactSidebar(v)}
+                />
               </div>
+              <Button onClick={handleSaveProfile} disabled={saving}>{saving ? "Saving..." : "Save Changes"}</Button>
             </CardContent>
           </Card>
         </TabsContent>

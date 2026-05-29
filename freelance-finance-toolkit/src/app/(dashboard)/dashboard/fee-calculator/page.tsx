@@ -1,20 +1,32 @@
 "use client"
 
-import { useEffect } from "react"
+import { useEffect, useState } from "react"
 import { motion } from "framer-motion"
-import { DollarSign, Globe, ArrowRight } from "lucide-react"
+import { DollarSign, TrendingDown, Info, Save, Check, Globe } from "lucide-react"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Separator } from "@/components/ui/separator"
 import { Badge } from "@/components/ui/badge"
+import { Separator } from "@/components/ui/separator"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { Switch } from "@/components/ui/switch"
 import { useCalculatorStore } from "@/store/calculator-store"
 import { formatCurrency } from "@/lib/utils"
+import { saveCalculation } from "@/lib/actions/reports"
 
 export default function FeeCalculatorPage() {
   const { feeInputs, feeOutputs, setFeeInputs, calculateFee } = useCalculatorStore()
+  const [saving, setSaving] = useState(false)
+  const [saved, setSaved] = useState(false)
+
+  async function handleSave() {
+    setSaving(true)
+    await saveCalculation("Fee Calculator", `Fee Analysis - ${new Date().toLocaleDateString()}`, JSON.stringify({ inputs: feeInputs, outputs: feeOutputs }))
+    setSaving(false)
+    setSaved(true)
+    setTimeout(() => setSaved(false), 2000)
+  }
 
   useEffect(() => {
     calculateFee()
@@ -158,6 +170,9 @@ export default function FeeCalculatorPage() {
               </CardContent>
             </Card>
           )}
+          <Button onClick={handleSave} disabled={saving} className="w-full">
+            {saving ? "Saving..." : saved ? <><Check className="h-4 w-4" /> Saved</> : <><Save className="h-4 w-4" /> Save Report</>}
+          </Button>
         </motion.div>
       </div>
     </div>

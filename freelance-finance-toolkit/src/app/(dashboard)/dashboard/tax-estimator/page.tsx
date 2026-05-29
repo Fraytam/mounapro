@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react"
 import { motion } from "framer-motion"
-import { Shield, TrendingDown, Info } from "lucide-react"
+import { Shield, TrendingDown, Info, Save, Check } from "lucide-react"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -13,9 +13,20 @@ import { Progress } from "@/components/ui/progress"
 import { Badge } from "@/components/ui/badge"
 import { useCalculatorStore } from "@/store/calculator-store"
 import { formatCurrency, formatPercent } from "@/lib/utils"
+import { saveCalculation } from "@/lib/actions/reports"
 
 export default function TaxEstimatorPage() {
   const { taxInputs, taxOutputs, setTaxInputs, calculateTax } = useCalculatorStore()
+  const [saving, setSaving] = useState(false)
+  const [saved, setSaved] = useState(false)
+
+  async function handleSave() {
+    setSaving(true)
+    await saveCalculation("Tax Estimator", `Tax Estimate - ${new Date().toLocaleDateString()}`, JSON.stringify({ inputs: taxInputs, outputs: taxOutputs }))
+    setSaving(false)
+    setSaved(true)
+    setTimeout(() => setSaved(false), 2000)
+  }
 
   useEffect(() => {
     calculateTax()
@@ -146,6 +157,9 @@ export default function TaxEstimatorPage() {
               </Card>
             </>
           )}
+          <Button onClick={handleSave} disabled={saving} className="w-full">
+            {saving ? "Saving..." : saved ? <><Check className="h-4 w-4" /> Saved</> : <><Save className="h-4 w-4" /> Save Report</>}
+          </Button>
         </motion.div>
       </div>
     </div>
