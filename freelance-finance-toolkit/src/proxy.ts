@@ -6,8 +6,8 @@ export async function proxy(request: NextRequest) {
   let user = null
 
   if (sessionId) {
-    const session = findSession(sessionId)
-    if (session) user = findUserById(session.userId)
+    const session = await findSession(sessionId)
+    if (session) user = await findUserById(session.userId)
   }
 
   const isAuthPage =

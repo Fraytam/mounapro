@@ -28,7 +28,7 @@
     "@stripe/stripe-js": "^9.6.0",
     "@supabase/ssr": "^0.10.3",
     "@supabase/supabase-js": "^2.106.1",
-    "better-sqlite3": "^12.10.0",
+    "@upstash/redis": "^1.38.0",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "framer-motion": "^12.40.0",
@@ -44,9 +44,12 @@
     "zod": "^4.4.3",
     "zustand": "^5.0.13"
   },
+  "optionalDependencies": {
+    "better-sqlite3": "^12.10.0",
+    "@types/better-sqlite3": "^7.6.13"
+  },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",
-    "@types/better-sqlite3": "^7.6.13",
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",

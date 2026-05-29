@@ -8,9 +8,9 @@ async function requireAdmin() {
   const cookieStore = await cookies()
   const sessionId = cookieStore.get("session_id")?.value
   if (!sessionId) return null
-  const session = findSession(sessionId)
+  const session = await findSession(sessionId)
   if (!session) return null
-  const user = findUserById(session.userId)
+  const user = await findUserById(session.userId)
   if (!user || user.role !== "admin") return null
   return user
 }
@@ -36,7 +36,7 @@ export async function getAdminReports() {
 export async function removeUser(userId: string) {
   const admin = await requireAdmin()
   if (!admin) return { error: "Unauthorized" }
-  deleteUserById(userId)
+  await deleteUserById(userId)
   revalidatePath("/admin/users")
   return { success: true }
 }
@@ -44,7 +44,7 @@ export async function removeUser(userId: string) {
 export async function removeReport(reportId: string) {
   const admin = await requireAdmin()
   if (!admin) return { error: "Unauthorized" }
-  deleteReport(reportId)
+  await deleteReport(reportId)
   revalidatePath("/admin/reports")
   return { success: true }
 }
@@ -52,7 +52,7 @@ export async function removeReport(reportId: string) {
 export async function changeUserRole(userId: string, role: string) {
   const admin = await requireAdmin()
   if (!admin) return { error: "Unauthorized" }
-  setUserRole(userId, role)
+  await setUserRole(userId, role)
   revalidatePath("/admin/users")
   return { success: true }
 }
