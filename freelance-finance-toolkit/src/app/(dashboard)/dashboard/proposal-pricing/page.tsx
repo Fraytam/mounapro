@@ -2,7 +2,7 @@
 
 import { useState } from "react"
 import { motion } from "framer-motion"
-import { FileText, Calculator, Clock, DollarSign } from "lucide-react"
+import { FileText, Calculator, Clock, DollarSign, Save, Check } from "lucide-react"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -11,13 +11,24 @@ import { Textarea } from "@/components/ui/textarea"
 import { Separator } from "@/components/ui/separator"
 import { Badge } from "@/components/ui/badge"
 import { formatCurrency } from "@/lib/utils"
+import { saveCalculation } from "@/lib/actions/reports"
 
 export default function ProposalPricingPage() {
   const [scope, setScope] = useState("")
-  const [hours, setHours] = useState(20)
-  const [rate, setRate] = useState(97)
-  const [complexity, setComplexity] = useState(1.2)
-  const [urgency, setUrgency] = useState(1.1)
+  const [hours, setHours] = useState(0)
+  const [rate, setRate] = useState(0)
+  const [complexity, setComplexity] = useState(1)
+  const [urgency, setUrgency] = useState(1)
+  const [saving, setSaving] = useState(false)
+  const [saved, setSaved] = useState(false)
+
+  async function handleSave() {
+    setSaving(true)
+    await saveCalculation("Proposal Pricing", `Proposal - ${scope || new Date().toLocaleDateString()}`, JSON.stringify({ scope, hours, rate, complexity, urgency, totalPrice }))
+    setSaving(false)
+    setSaved(true)
+    setTimeout(() => setSaved(false), 2000)
+  }
 
   const basePrice = hours * rate
   const complexityMultiplier = basePrice * (complexity - 1)
@@ -123,6 +134,9 @@ export default function ProposalPricingPage() {
               </div>
             </CardContent>
           </Card>
+          <Button onClick={handleSave} disabled={saving} className="w-full">
+            {saving ? "Saving..." : saved ? <><Check className="h-4 w-4" /> Saved</> : <><Save className="h-4 w-4" /> Save Report</>}
+          </Button>
         </motion.div>
       </div>
     </div>

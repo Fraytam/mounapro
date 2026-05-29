@@ -627,9 +627,9 @@ export default function LandingPage() {
               <span className="text-sm font-bold">MounaPro</span>
             </div>
             <div className="flex gap-6 text-sm text-zinc-500">
-              <Link href="#" className="hover:text-zinc-900 dark:hover:text-zinc-50">Privacy Policy</Link>
-              <Link href="#" className="hover:text-zinc-900 dark:hover:text-zinc-50">Terms of Service</Link>
-              <Link href="#" className="hover:text-zinc-900 dark:hover:text-zinc-50">Contact</Link>
+              <span className="cursor-default">Privacy Policy</span>
+              <span className="cursor-default">Terms of Service</span>
+              <span className="cursor-default">Contact</span>
             </div>
             <p className="text-xs text-zinc-400">&copy; 2026 MounaPro. All rights reserved.</p>
           </div>

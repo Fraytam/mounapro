@@ -12,8 +12,8 @@ import {
 } from "recharts"
 
 export default function IncomeForecastPage() {
-  const [monthlyAvg, setMonthlyAvg] = useState(12000)
-  const [growthRate, setGrowthRate] = useState(10)
+  const [monthlyAvg, setMonthlyAvg] = useState(0)
+  const [growthRate, setGrowthRate] = useState(0)
   const [dark, setDark] = useState(false)
 
   useEffect(() => {

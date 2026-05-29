@@ -143,7 +143,6 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           <div className="flex items-center gap-3">
             <button className="relative">
               <Bell className="h-5 w-5 text-zinc-500" />
-              <span className="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-zinc-900 dark:bg-zinc-50 text-[10px] text-white dark:text-zinc-900">3</span>
             </button>
 
             <div className="relative">
